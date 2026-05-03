@@ -24,11 +24,20 @@
                 becomeFirstResponder()
             #else
                 pendingKeyboardDismissOnTouchEnd = false
+                pendingFocusOnTouchEnd = false
                 touchDidScrollDuringCurrentTouch = false
                 if softwareKeyboardVisible {
                     pendingKeyboardDismissOnTouchEnd = true
                 } else {
-                    becomeFirstResponder()
+                    // Defer becomeFirstResponder to touchesEnded so that
+                    // a pan-to-scroll gesture doesn't pop the soft
+                    // keyboard mid-scroll. Without this, every scroll
+                    // attempt that started from the kb-down state would
+                    // synchronously focus the surface + show the keyboard,
+                    // and the keyboard frame change visually masked the
+                    // scroll (caught 2026-05-03 真机 report "scroll
+                    // 失效，刚滚就弹了输入框").
+                    pendingFocusOnTouchEnd = true
                 }
             #endif
         }
@@ -58,7 +67,11 @@
                 if pendingKeyboardDismissOnTouchEnd, !touchDidScrollDuringCurrentTouch {
                     resignFirstResponder()
                 }
+                if pendingFocusOnTouchEnd, !touchDidScrollDuringCurrentTouch {
+                    becomeFirstResponder()
+                }
                 pendingKeyboardDismissOnTouchEnd = false
+                pendingFocusOnTouchEnd = false
                 touchDidScrollDuringCurrentTouch = false
             #endif
             super.touchesEnded(touches, with: event)
@@ -75,6 +88,7 @@
             #endif
             #if !targetEnvironment(macCatalyst)
                 pendingKeyboardDismissOnTouchEnd = false
+                pendingFocusOnTouchEnd = false
                 touchDidScrollDuringCurrentTouch = false
             #endif
             super.touchesCancelled(touches, with: event)
