@@ -35,6 +35,12 @@
             let stickyModifiers = TerminalStickyModifierState()
             var softwareKeyboardVisible = false
             var pendingKeyboardDismissOnTouchEnd = false
+            // Set in touchesBegan when the keyboard is currently down,
+            // checked in touchesEnded — defers becomeFirstResponder so
+            // a pan-to-scroll gesture (which sets
+            // touchDidScrollDuringCurrentTouch=true) won't pop the
+            // keyboard mid-scroll.
+            var pendingFocusOnTouchEnd = false
             var touchDidScrollDuringCurrentTouch = false
         #endif
 
