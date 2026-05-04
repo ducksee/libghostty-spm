@@ -28,6 +28,15 @@
                     core.synchronizeMetrics()
                 }
             } else {
+                // CRITICAL: stop momentum scroll BEFORE freeing the
+                // surface. The momentum CADisplayLink retains `self`
+                // and pushes sendMouseScroll(...) on every frame; if
+                // the user is mid-flick when the view detaches (e.g.
+                // RN multi-tab swap, Stack.Screen pop), the display
+                // link keeps firing into a freed `surface?` pointer
+                // → CA::Transaction::commit crash on the next frame
+                // (Sentry RN-M / RN-3 / RN-K root cause, 2026-05-03).
+                stopMomentumScrolling()
                 core.stopDisplayLink()
                 core.freeSurface()
             }
