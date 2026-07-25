@@ -66,6 +66,38 @@
             set { core.configuration = newValue }
         }
 
+        /// Whether the program running in the terminal has asked to
+        /// receive mouse events (DECSET 1000/1002/1003).
+        ///
+        /// A host app uses this to decide who owns a gesture — the local
+        /// UI or the remote program. It must not try to infer that from
+        /// what it thinks is running: the terminal already knows, and
+        /// guessing is how stray SGR sequences end up typed into a shell.
+        public var terminalOwnsPointer: Bool {
+            surface?.isMouseCaptured ?? false
+        }
+
+        /// Report a pointer position, in this view's coordinate space.
+        public func sendPointerPosition(_ point: CGPoint) {
+            surface?.sendMousePos(x: Double(point.x), y: Double(point.y), mods: GHOSTTY_MODS_NONE)
+        }
+
+        /// Report a pointer button press or release. Ghostty decides the
+        /// tracking level and the wire encoding; the caller never builds
+        /// an escape sequence itself.
+        public func sendPointerButton(pressed: Bool, button: ghostty_input_mouse_button_e = GHOSTTY_MOUSE_LEFT) {
+            surface?.sendMouseButton(
+                state: pressed ? GHOSTTY_MOUSE_PRESS : GHOSTTY_MOUSE_RELEASE,
+                button: button,
+                mods: GHOSTTY_MODS_NONE
+            )
+        }
+
+        /// Report a scroll delta.
+        public func sendPointerScroll(x: Double, y: Double) {
+            surface?.sendMouseScroll(x: x, y: y, mods: ghostty_input_scroll_mods_t())
+        }
+
         var surface: TerminalSurface? {
             core.surface
         }
